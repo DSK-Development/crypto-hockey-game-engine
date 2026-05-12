@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/dskdev/crypto-hockey-game-engine/internal/protocol"
@@ -54,3 +55,22 @@ func (c *Conn) Close() {
 func (c *Conn) WaitClosed() { <-c.doneCh }
 
 func (c *Conn) Done() <-chan struct{} { return c.doneCh }
+
+// WriteEnvelope/ReadEnvelope satisfy match.ConnHandle.
+func (c *Conn) WriteEnvelope(ctx context.Context, e protocol.ServerEnvelope) error {
+	return c.WriteJSON(ctx, e)
+}
+
+// ReadEnvelope returns the next client message or an error if the read times out / fails.
+// The runner is expected to call this on its tick cadence; we use a short deadline.
+func (c *Conn) ReadEnvelope(ctx context.Context) (protocol.ClientEnvelope, error) {
+	rctx, cancel := context.WithTimeout(ctx, 5*time.Millisecond)
+	defer cancel()
+	var env protocol.ClientEnvelope
+	if err := c.ReadJSON(rctx, &env); err != nil {
+		return env, err
+	}
+	return env, nil
+}
+
+func (c *Conn) CloseSignal() <-chan struct{} { return c.doneCh }
