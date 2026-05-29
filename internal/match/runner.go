@@ -88,7 +88,11 @@ func (r *Runner) Run(ctx context.Context) {
 			r.endByScore(ctx, "timeout")
 			return
 		case <-tick.C:
-			if r.m.Phase() != PhaseLive {
+			phase := r.m.Phase()
+			if phase == PhaseCountdown || phase == PhaseLive {
+				r.checkDisconnects(ctx, &disconnectAt)
+			}
+			if phase != PhaseLive {
 				continue
 			}
 			r.drainInputs(ctx)
@@ -99,7 +103,6 @@ func (r *Runner) Run(ctx context.Context) {
 					return
 				}
 			}
-			r.checkDisconnects(ctx, &disconnectAt)
 			frame++
 			if frame%snapEvery == 0 {
 				r.broadcast(ctx, protocol.ServerEnvelope{

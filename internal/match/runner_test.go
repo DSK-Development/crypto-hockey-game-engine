@@ -50,10 +50,11 @@ type fakeSettler struct {
 	reason string
 }
 
-func (s *fakeSettler) Settle(_ context.Context, _ *Match, w, r string) {
+func (s *fakeSettler) Settle(_ context.Context, m *Match, w, r string) {
 	atomic.StoreInt32(&s.called, 1)
 	s.winner = w
 	s.reason = r
+	m.SetPhase(PhaseSettled)
 }
 
 func TestRunner_ForfeitDuringCountdown_DoesNotGoLive(t *testing.T) {
