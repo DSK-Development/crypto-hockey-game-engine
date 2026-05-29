@@ -20,7 +20,7 @@ Every message has a `type` discriminator. All numeric coordinates are in the eng
 | MATCH_STATE | `{ phase: "PENDING"|"COUNTDOWN"|"LIVE"|"SETTLED", countdownMs?: int, durationLeftMs?: int }`         |
 | SNAPSHOT    | `{ tServer: int64, ackSeq: int, malletA: V2, malletB: V2, puck: { x,y,vx,vy }, score: { a,b } }`     |
 | GOAL        | `{ scorer: "A"|"B", score: { a: int, b: int } }`                                                     |
-| MATCH_END   | `{ winnerUserId: string|null, reason: "score"|"timeout"|"forfeit"|"no_join", finalScore: {a,b} }`    |
+| MATCH_END   | `{ winnerUserId: string|null, winnerSlot: "A"|"B"|null, reason: "score"|"timeout"|"forfeit"|"no_join", finalScore: {a,b} }` |
 | PONG        | `{ tClient: int64, tServer: int64 }`                                                                 |
 
 `V2` = `{ x: float, y: float }`.
@@ -31,4 +31,5 @@ Every message has a `type` discriminator. All numeric coordinates are in the eng
 - `ackSeq` echoes the last applied `INPUT.seq` for client-side reconciliation.
 
 ## Changelog
+- 2026-05-30 — `MATCH_END` now always broadcast by the server on match end (score cap, timeout, forfeit). Added `winnerSlot` (`"A"` | `"B"` | `null`) alongside `winnerUserId` — clients should prefer `winnerSlot` for win/loss display since they know their own slot but not their server-side UUID.
 - 2026-05-12 — v1 initial.
