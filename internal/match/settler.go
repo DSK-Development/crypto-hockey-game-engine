@@ -23,10 +23,9 @@ type defaultSettler struct {
 func NewSettler(a accountPoster, b botNotifier) *defaultSettler { return &defaultSettler{acc: a, bot: b} }
 
 func (s *defaultSettler) Settle(ctx context.Context, m *Match, winnerUserID, reason string) {
-	if m.Phase() == PhaseSettled {
+	if !m.trySettle() {
 		return
 	}
-	m.SetPhase(PhaseSettled)
 	score := m.Score()
 	parts := make([]account.Participant, 0, 2)
 	for i, p := range m.Spec().Players {

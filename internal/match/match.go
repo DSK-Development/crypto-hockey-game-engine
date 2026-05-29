@@ -65,6 +65,18 @@ func (m *Match) JoinDeadlineAt() time.Time { return m.deadlineJoin }
 
 func (m *Match) SetPhase(p Phase) { m.mu.Lock(); m.phase = p; m.mu.Unlock() }
 
+// trySettle atomically transitions phase to SETTLED.
+// Returns false if the match was already SETTLED (caller must not proceed).
+func (m *Match) trySettle() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.phase == PhaseSettled {
+		return false
+	}
+	m.phase = PhaseSettled
+	return true
+}
+
 // ApplyGoal increments score for the scorer and returns true if the goal cap is hit.
 func (m *Match) ApplyGoal(scorer string) bool {
 	m.mu.Lock()
