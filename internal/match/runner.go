@@ -160,6 +160,17 @@ func (r *Runner) checkDisconnects(ctx context.Context, at *[2]*time.Time) {
 			if now.Sub(*at[i]) >= r.forfeitGrace {
 				winnerSlot := 1 - i
 				winner := r.m.Spec().Players[winnerSlot].UserID
+				slotName := [2]string{"A", "B"}[winnerSlot]
+				score := r.m.Score()
+				r.broadcast(ctx, protocol.ServerEnvelope{
+					Type: protocol.TypeMatchEnd,
+					MatchEnd: &protocol.MatchEndPayload{
+						WinnerUserID: &winner,
+						WinnerSlot:   &slotName,
+						Reason:       "forfeit",
+						FinalScore:   score,
+					},
+				})
 				r.settler.Settle(ctx, r.m, winner, "forfeit")
 				return
 			}
@@ -173,12 +184,23 @@ func (r *Runner) checkDisconnects(ctx context.Context, at *[2]*time.Time) {
 
 func (r *Runner) endByScore(ctx context.Context, reason string) {
 	s := r.m.Score()
-	var winner string
+	var winner, winnerSlot string
 	if s.A > s.B {
 		winner = r.m.Spec().Players[0].UserID
+		winnerSlot = "A"
 	} else if s.B > s.A {
 		winner = r.m.Spec().Players[1].UserID
-	} // ties handled at higher level; for v1 we accept tie → no winner.
+		winnerSlot = "B"
+	}
+	r.broadcast(ctx, protocol.ServerEnvelope{
+		Type: protocol.TypeMatchEnd,
+		MatchEnd: &protocol.MatchEndPayload{
+			WinnerUserID: ptrStr(winner),
+			WinnerSlot:   ptrStr(winnerSlot),
+			Reason:       reason,
+			FinalScore:   s,
+		},
+	})
 	r.settler.Settle(ctx, r.m, winner, reason)
 }
 
@@ -208,5 +230,11 @@ func (r *Runner) broadcastGoal(ctx context.Context, scorer string, s protocol.Sc
 	})
 }
 
-func intPtr(i int) *int                          { return &i }
+func intPtr(i int) *int                                             { return &i }
 func ptrSnap(s protocol.SnapshotPayload) *protocol.SnapshotPayload { return &s }
+func ptrStr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}

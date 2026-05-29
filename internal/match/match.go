@@ -89,19 +89,6 @@ func (m *Match) trySetLive() bool {
 	return true
 }
 
-// ApplyGoal increments score for the scorer and returns true if the goal cap is hit.
-func (m *Match) ApplyGoal(scorer string) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if scorer == "A" {
-		m.score.A++
-	} else if scorer == "B" {
-		m.score.B++
-	}
-	m.resetPuck()
-	return m.score.A >= m.spec.GoalCap || m.score.B >= m.spec.GoalCap
-}
-
 func (m *Match) resetPuck() {
 	m.puck = physics.Body{Pos: physics.Vec2{X: 400, Y: 200}, R: 14}
 }

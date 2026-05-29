@@ -87,6 +87,7 @@ type GoalPayload struct {
 
 type MatchEndPayload struct {
 	WinnerUserID *string `json:"winnerUserId"`
+	WinnerSlot   *string `json:"winnerSlot"` // "A" or "B"; nil for tie/no-win
 	Reason       string  `json:"reason"`
 	FinalScore   Score   `json:"finalScore"`
 }
