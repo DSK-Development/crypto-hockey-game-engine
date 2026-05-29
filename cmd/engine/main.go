@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -22,12 +23,15 @@ type starter struct {
 	settler      match.Settler
 	logger       *slog.Logger
 	forfeitGrace time.Duration
+	mu           sync.RWMutex
 	runners      map[string]*match.Runner
 }
 
 func (s *starter) Start(m *match.Match) {
 	r := match.NewRunner(m, s.settler, s.logger, s.forfeitGrace)
+	s.mu.Lock()
 	s.runners[m.ID()] = r
+	s.mu.Unlock()
 	go r.Run(context.Background())
 }
 
@@ -64,7 +68,10 @@ func main() {
 	})
 
 	wsSrv := ws.NewServer(reg, authBridge{ac: acc}, func(m *match.Match, slot int, c *ws.Conn) {
-		if r, ok := start.runners[m.ID()]; ok {
+		start.mu.RLock()
+		r, ok := start.runners[m.ID()]
+		start.mu.RUnlock()
+		if ok {
 			r.Join(c)
 		}
 	})
