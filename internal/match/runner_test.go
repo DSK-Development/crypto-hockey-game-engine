@@ -56,6 +56,43 @@ func (s *fakeSettler) Settle(_ context.Context, _ *Match, w, r string) {
 	s.reason = r
 }
 
+func TestRunner_ForfeitDuringCountdown_DoesNotGoLive(t *testing.T) {
+	m := New(Spec{
+		ID:           "forf",
+		Players:      [2]Player{{UserID: "u1"}, {UserID: "u2"}},
+		JoinDeadline: 2 * time.Second,
+		Duration:     2 * time.Second,
+		GoalCap:      5,
+		Now:          time.Now(),
+	})
+	s := &fakeSettler{}
+	r := NewRunner(m, s, slog.Default(), 50*time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
+
+	go r.Run(ctx)
+
+	ca := newFakeConn(0, "u1")
+	cb := newFakeConn(1, "u2")
+	r.Join(ca)
+	r.Join(cb)
+
+	// Disconnect slot 0; forfeit grace is 50ms.
+	time.Sleep(30 * time.Millisecond)
+	ca.close()
+
+	// Wait for forfeit grace to expire and settlement to happen.
+	time.Sleep(200 * time.Millisecond)
+
+	if atomic.LoadInt32(&s.called) != 1 {
+		t.Fatalf("expected exactly 1 settlement, got %d", atomic.LoadInt32(&s.called))
+	}
+	if m.Phase() != PhaseSettled {
+		t.Fatalf("phase after forfeit: %s, want SETTLED", m.Phase())
+	}
+}
+
 func TestRunner_NoJoinDeadline(t *testing.T) {
 	m := New(Spec{
 		ID: "m1",

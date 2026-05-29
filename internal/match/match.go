@@ -77,6 +77,18 @@ func (m *Match) trySettle() bool {
 	return true
 }
 
+// trySetLive atomically transitions COUNTDOWN → LIVE.
+// Returns false if phase is not COUNTDOWN (match already settled or not yet at countdown).
+func (m *Match) trySetLive() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.phase != PhaseCountdown {
+		return false
+	}
+	m.phase = PhaseLive
+	return true
+}
+
 // ApplyGoal increments score for the scorer and returns true if the goal cap is hit.
 func (m *Match) ApplyGoal(scorer string) bool {
 	m.mu.Lock()

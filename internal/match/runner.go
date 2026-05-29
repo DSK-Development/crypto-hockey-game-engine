@@ -72,7 +72,9 @@ func (r *Runner) Run(ctx context.Context) {
 				r.m.SetPhase(PhaseCountdown)
 				r.broadcastState(ctx, PhaseCountdown, intPtr(3000), nil)
 				time.AfterFunc(3*time.Second, func() {
-					r.m.SetPhase(PhaseLive)
+					if !r.m.trySetLive() {
+						return // match already settled before countdown ended
+					}
 					matchTimer.Reset(r.m.Spec().Duration)
 					r.broadcastState(ctx, PhaseLive, nil, intPtr(int(r.m.Spec().Duration/time.Millisecond)))
 				})
