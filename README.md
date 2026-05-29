@@ -9,6 +9,17 @@ cp .env.example .env
 make run
 ```
 
+## Docker
+
+```bash
+docker build -t crypto-hockey-game-engine .
+docker run -p 8081:8081 \
+  -e SERVICE_TOKEN=change-me \
+  crypto-hockey-game-engine
+```
+
+For the full stack see `docker-compose.yml` at the repo root.
+
 ## HTTP
 - `POST /internal/matches` — create a match (caller: bot service)
 - `GET  /internal/matches/{id}` — match state
