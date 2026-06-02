@@ -57,7 +57,7 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 		_ = conn.WriteJSON(ctx, protocol.ServerEnvelope{Type: protocol.TypeAuthFail, AuthFail: &protocol.AuthFailPayload{Reason: "auth failed"}})
 		return
 	}
-	slot, opp, err := assignSlot(m, userID)
+	slot, opp, err := assignSlot(m, userID, telegramID)
 	if err != nil {
 		_ = conn.WriteJSON(ctx, protocol.ServerEnvelope{Type: protocol.TypeAuthFail, AuthFail: &protocol.AuthFailPayload{Reason: err.Error()}})
 		return
@@ -75,10 +75,10 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 	conn.WaitClosed()
 }
 
-func assignSlot(m *match.Match, userID string) (int, protocol.Opponent, error) {
+func assignSlot(m *match.Match, userID string, telegramID int64) (int, protocol.Opponent, error) {
 	players := m.Spec().Players
 	for i, p := range players {
-		if p.UserID == userID {
+		if p.UserID == userID || p.TelegramID == telegramID {
 			opp := players[1-i]
 			return i, protocol.Opponent{Username: opp.Username, TelegramID: opp.TelegramID}, nil
 		}
