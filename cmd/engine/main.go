@@ -42,7 +42,7 @@ func (a authBridge) AuthTelegram(ctx context.Context, initData string) (string, 
 	if err != nil {
 		return "", 0, "", err
 	}
-	return res.UserID, res.TelegramID, res.Username, nil
+	return res.Player.ID, res.Player.TelegramID, res.Player.Username, nil
 }
 
 func main() {

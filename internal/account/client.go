@@ -21,11 +21,15 @@ func New(base, token string) *Client {
 	return &Client{base: base, token: token, http: &http.Client{Timeout: 5 * time.Second}, retries: 3}
 }
 
+type authPlayer struct {
+	ID         string `json:"id"`
+	TelegramID int64  `json:"telegramId"`
+	Username   string `json:"username"`
+}
+
 type AuthResult struct {
-	AccessToken string `json:"accessToken"`
-	UserID      string `json:"userId"`
-	TelegramID  int64  `json:"telegramId"`
-	Username    string `json:"username"`
+	AccessToken string     `json:"accessToken"`
+	Player      authPlayer `json:"player"`
 }
 
 func (c *Client) AuthTelegram(ctx context.Context, initData string) (AuthResult, error) {
@@ -90,7 +94,7 @@ func (c *Client) once(ctx context.Context, method, path string, body, out any) e
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Service-Token", c.token)
+	req.Header.Set("Authorization", "Bearer "+c.token)
 	res, err := c.http.Do(req)
 	if err != nil {
 		return err
