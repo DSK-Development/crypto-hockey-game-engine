@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v11"
@@ -25,6 +26,9 @@ func Load() (Config, error) {
 	var c Config
 	if err := env.Parse(&c); err != nil {
 		return c, fmt.Errorf("config: %w", err)
+	}
+	if port := os.Getenv("PORT"); port != "" {
+		c.HTTPAddr = ":" + port
 	}
 	return c, nil
 }

@@ -19,7 +19,8 @@ func TestAuthTelegram_HappyPath(t *testing.T) {
 			t.Fatalf("body: %+v", body)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"accessToken": "jwt", "userId": "u1", "telegramId": 42, "username": "alice",
+			"accessToken": "jwt",
+			"player":      map[string]any{"id": "u1", "telegramId": 42, "username": "alice"},
 		})
 	}))
 	defer s.Close()
@@ -28,7 +29,7 @@ func TestAuthTelegram_HappyPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.UserID != "u1" || res.Username != "alice" {
+	if res.Player.ID != "u1" || res.Player.Username != "alice" {
 		t.Fatalf("result: %+v", res)
 	}
 }
