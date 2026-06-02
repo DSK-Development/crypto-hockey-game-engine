@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"sync"
 
@@ -54,11 +55,13 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	userID, telegramID, username, err := s.auth.AuthTelegram(ctx, env.Auth.InitData)
 	if err != nil {
-		_ = conn.WriteJSON(ctx, protocol.ServerEnvelope{Type: protocol.TypeAuthFail, AuthFail: &protocol.AuthFailPayload{Reason: "auth failed"}})
+		slog.Error("ws auth failed", "err", err, "initDataLen", len(env.Auth.InitData))
+		_ = conn.WriteJSON(ctx, protocol.ServerEnvelope{Type: protocol.TypeAuthFail, AuthFail: &protocol.AuthFailPayload{Reason: "auth failed: " + err.Error()}})
 		return
 	}
 	slot, opp, err := assignSlot(m, userID, telegramID)
 	if err != nil {
+		slog.Error("ws assignSlot failed", "err", err, "userID", userID, "telegramID", telegramID)
 		_ = conn.WriteJSON(ctx, protocol.ServerEnvelope{Type: protocol.TypeAuthFail, AuthFail: &protocol.AuthFailPayload{Reason: err.Error()}})
 		return
 	}
